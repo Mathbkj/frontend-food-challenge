@@ -11,6 +11,8 @@ import cake from "@images/image-cake-desktop.jpg"
 import brownie from "@images/image-brownie-desktop.jpg"
 import panna from "@images/image-panna-cotta-desktop.jpg"
 import emptyCard from "@images/illustration-empty-cart.svg"
+import carbonIcon from "@images/icon-carbon-neutral.svg";
+import orderConfirmed from "@images/icon-order-confirmed.svg"
 import { CartSelected } from './components/CartSelected'
 import { ListData } from './lists/List'
 
@@ -20,6 +22,8 @@ function App() {
   const [counter, setCounter] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0]);
   const [totalCount, setTotalCount] = useState(0)
   const [cartItem, setCartItem] = useState(ListData);
+  const [orderTotal, setTotalOrder] = useState(0);
+  const [isModalOpen,setModalOpen]=useState(false)
 
   const decrement = (index) => {
     setCounter(prev => {
@@ -31,7 +35,7 @@ function App() {
       }
       if (!newCounter[index] <= 0) {
           newCounter[index] -= 1
-        setTotalCount(prev => prev - 1)    
+        setTotalCount(prev => Math.abs(prev - 1))    
      
       }
     
@@ -68,13 +72,27 @@ function App() {
     decrement(index)
   }
   useEffect(() => {
-    console.log(`Selected State Changed to ${JSON.stringify(selected)}.\n Counter State Changed to ${JSON.stringify(counter)}`)
-  }, [selected, counter])
+    console.log(`Selected State Changed to ${JSON.stringify(selected)}.\n Counter State  Changed to ${JSON.stringify(counter)}`)
+    const total = cartItem.reduce((acc, item, key) => {
+      if (selected[key]) {
+        return acc+counter[key] * parseFloat(item.price)
+      }
+      return acc;
+    }, 0)
+    setTotalOrder(total.toFixed(2));
+  }, [selected, counter,cartItem])
   useEffect(() => {
     if (totalCount == 0) {
       setTotalCount(0)
     }
-  },[totalCount])
+  }, [totalCount])
+  useEffect(() => {
+    console.log(`Order Total Value Changed to ${orderTotal}`)
+  }, [orderTotal])
+  
+  const handleModal = () => {
+    setModalOpen(true);
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
@@ -97,19 +115,57 @@ function App() {
             </div>
           </div>
           <div className="lg:w-64 bg-white h-max rounded-lg overflow-hidden flex flex-col justify-between">
-            <div className="p-6">
+            <div className="p-6 min-w-[100%]">
               <h2 className="text-xl font-semibold mb-4">{`Your Cart(${totalCount})`}</h2>
-              <div className="space-y-2">
+              <div className="space-y-6">
                 {totalCount < 1 && <img width={100} height={100} className="object-cover block m-auto" src={emptyCard}></img>}
                 <ul>
                   {ListData.map(el => {
                     if (el.selected == true) {
-                    return <CartSelected key={el.key} title={el.title} ammo={counter[el.key]} unitCost={el.price.toFixed(2)}  handleRemove={()=>handleRemoved(el.key)} />
+                      return <>
+                        <CartSelected key={el.key} title={el.title} ammo={counter[el.key]} unitCost={el.price.toFixed(2)} handleRemove={() => handleRemoved(el.key)} />
+                        <hr className="mx-auto my-3"/>
+                    </>
                     }
                   }
                   )}
                 </ul>
-                {totalCount>=1? <button className="text-white block m-auto px-11 py-2 rounded-3xl bg-red-500">Confirm Order</button>:<p>Your selected items will appear here</p>}
+                
+                
+                {totalCount >= 1 && <div className="flex items-center justify-between">
+                  <span>Order Total</span>
+                  <span className="text-xl font-bold">${orderTotal}</span>
+                </div>}
+                {totalCount >= 1 ? <button onClick={handleModal} type='submit' className="text-white block m-auto px-11 py-2 rounded-3xl bg-red-500">Confirm Order</button> : <p>Your selected items will appear here</p>}
+                {totalCount >= 1 && <div className="flex items-center justify-center gap-2  bg-emerald-500/10 px-2 py-3">
+                  <img src={carbonIcon}></img>
+                  <p className='text-center'>This is a cabon-neutral delivery </p>
+                </div>}
+                
+              </div>
+              <div style={{backgroundPosition:""}} className={`modal-container ${isModalOpen==false?'hidden':''} w-screen h-[200%] bg-fixed right-1/2 absolute translate-x-1/2 translate-y-1/2 bottom-1/2 z-10 bg-slate-950/30`}>
+                <div className="modal-content rounded-md absolute translate-x-[70%] p-10 -translate-y-1/2 top-1/2 right-1/2 flex flex-col bg-white z-20 w-[300px]">
+                  <img src={orderConfirmed} width={30} height={30} />
+                  <h1 className="font-semibold text-2xl">Order Confirmation</h1>
+                  <h2 className="text-base font-thin text-black/50">We hope you enjoy your food!</h2>
+                    <ul className="">
+                  {ListData.map(el => {
+                    if (el.selected == true) {
+                      return <>
+                        <div className="flex justify-center items-center gap-4">
+                          <img style={{ objectFit:"contain"}} width={30} height={10} src={el.src}></img>
+                          <CartSelected key={el.key} title={el.title} ammo={counter[el.key]} unitCost={el.price.toFixed(2)} />
+                        </div>
+                        
+                        <hr className="mx-auto my-3"/>
+                    </>
+                    }
+                  }
+                  )}
+                  </ul>
+                  <button type='submit' className="text-white block m-auto px-11 py-2 rounded-3xl bg-red-500">Start New Order</button>
+                  
+                  </div>
               </div>
             </div>
           </div>
