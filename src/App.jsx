@@ -17,7 +17,7 @@ import { ListData } from './lists/List'
 
 function App() {
   const [selected, setSelected] = useState([false, false, false, false, false, false, false, false, false])
-  const [counter,setCounter] = useState([0,0,0,0,0,0,0,0,0])
+  const [counter, setCounter] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0]);
   const [totalCount, setTotalCount] = useState(0)
   const [cartItem, setCartItem] = useState(ListData);
 
@@ -29,10 +29,15 @@ function App() {
           return {...prev,[index]:false}
         })
       }
-      newCounter[index] -= 1
-      return newCounter
+      if (!newCounter[index] <= 0) {
+          newCounter[index] -= 1
+        setTotalCount(prev => prev - 1)    
+     
+      }
+    
+         return newCounter
     })
-    setTotalCount(prev=>prev-1)
+    
   }
   const increment = (index) => { 
     setCounter(prev => {
@@ -64,7 +69,12 @@ function App() {
   }
   useEffect(() => {
     console.log(`Selected State Changed to ${JSON.stringify(selected)}.\n Counter State Changed to ${JSON.stringify(counter)}`)
-  }, [selected,counter])
+  }, [selected, counter])
+  useEffect(() => {
+    if (totalCount == 0) {
+      setTotalCount(0)
+    }
+  },[totalCount])
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
@@ -90,16 +100,16 @@ function App() {
             <div className="p-6">
               <h2 className="text-xl font-semibold mb-4">{`Your Cart(${totalCount})`}</h2>
               <div className="space-y-2">
-                <img width={100} height={100} className="object-cover block m-auto" src={emptyCard}></img>
+                {totalCount < 1 && <img width={100} height={100} className="object-cover block m-auto" src={emptyCard}></img>}
                 <ul>
                   {ListData.map(el => {
                     if (el.selected == true) {
-                    return <CartSelected key={el.key} title={el.title} ammo={"1x"} unitCost={el.price} pluralCost={el.price} handleRemove={()=>handleRemoved(el.key)} />
-
+                    return <CartSelected key={el.key} title={el.title} ammo={counter[el.key]} unitCost={el.price.toFixed(2)}  handleRemove={()=>handleRemoved(el.key)} />
                     }
                   }
                   )}
                 </ul>
+                {totalCount>=1? <button className="text-white block m-auto px-11 py-2 rounded-3xl bg-red-500">Confirm Order</button>:<p>Your selected items will appear here</p>}
               </div>
             </div>
           </div>
